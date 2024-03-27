@@ -1,5 +1,7 @@
 use std::ops::Range;
 
+use anyhow::{bail, Result};
+
 /// The size of a game save in bytes.
 const SAVE_SIZE: usize = 131072;
 /// The size of a save block in bytes.
@@ -35,9 +37,9 @@ pub struct Save {
 }
 
 impl Save {
-    pub fn new(buf: Vec<u8>) -> Save {
-        if buf.len() < SAVE_SIZE as usize {
-            panic!("save file too small");
+    pub fn new(buf: Vec<u8>) -> Result<Save> {
+        if buf.len() < SAVE_SIZE {
+            bail!("the game save is too small");
         }
 
         let save_blocks = &buf[..(BLOCK_SIZE * 2)];
@@ -48,7 +50,7 @@ impl Save {
         let most_recent_block =
             if save_index_a > save_index_b { Block::A } else { Block::B };
 
-        Save { buf: buf.into_boxed_slice(), most_recent_block }
+        Ok(Save { buf: buf.into_boxed_slice(), most_recent_block })
     }
 
     pub fn player_gender(&self) -> Gender {
