@@ -13,4 +13,11 @@ name = "firered-save-editor"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "winsafe",
 ]
+
+[[package]]
+name = "winsafe"
+version = "0.0.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a40369220be405a294b88b13ccc3d916fac12423250b30092c8c4ea19001f7f1"
