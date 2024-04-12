@@ -18,6 +18,8 @@ struct EditorWindow {
 impl EditorWindow {
     fn new(parent: &gui::WindowMain) -> EditorWindow {
         let mut options: gui::WindowControlOpts = Default::default();
+        // Match the background color of the parent window.
+        options.class_bg_brush = gui::WindowMainOpts::default().class_bg_brush;
         options.style = options.style & !co::WS::VISIBLE;
         let window = gui::WindowControl::new(parent, options);
 
