@@ -59,6 +59,7 @@ impl EditorWindow {
             Gender::Boy => 0,
             Gender::Girl => 1,
         };
+        // TODO: Clear the previous buttons to handle subsequent loads.
         let gender_radio_button = &self.gender_radio_group[gender_radio_index];
         gender_radio_button.select(true);
 
