@@ -21,13 +21,34 @@ impl EditorWindow {
         // Match the background color of the parent window.
         options.class_bg_brush = gui::WindowMainOpts::default().class_bg_brush;
         options.style = options.style & !co::WS::VISIBLE;
+        // TODO: The size of EditorWindow needs to say in sync with the main window. Listen
+        // on an event for window size changes?
+        options.size = (400, 200);
         let window = gui::WindowControl::new(parent, options);
 
         let _ = gui::Label::new(
             &window,
             gui::LabelOpts {
-                text: String::from("Gender"),
-                position: (20, 20),
+                text: "Name:".to_owned(),
+                position: (20, 23),
+                ..Default::default()
+            },
+        );
+
+        let _ = gui::Edit::new(
+            &window,
+            gui::EditOpts {
+                position: (75, 20),
+                width: 100,
+                ..Default::default()
+            },
+        );
+
+        let _ = gui::Label::new(
+            &window,
+            gui::LabelOpts {
+                text: "Gender:".to_owned(),
+                position: (20, 60),
                 ..Default::default()
             },
         );
@@ -37,12 +58,12 @@ impl EditorWindow {
             &[
                 gui::RadioButtonOpts {
                     text: "Boy".to_owned(),
-                    position: (20, 40),
+                    position: (75, 60),
                     ..Default::default()
                 },
                 gui::RadioButtonOpts {
                     text: "Girl".to_owned(),
-                    position: (20, 60),
+                    position: (125, 60),
                     ..Default::default()
                 },
             ],
@@ -84,7 +105,7 @@ fn main() -> Result<()> {
     }])?;
 
     let main_window = gui::WindowMain::new(gui::WindowMainOpts {
-        title: String::from("Firered Save Editor"),
+        title: "Firered Save Editor".to_owned(),
         size: (400, 200),
         menu,
         accel_table: Some(accel_table),
