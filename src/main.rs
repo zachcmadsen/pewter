@@ -75,16 +75,23 @@ impl EditorWindow {
     fn load(&self, buf: Vec<u8>) {
         let save = Save::new(buf).unwrap();
 
+        self.init_gender(&save);
+
+        self.window.hwnd().ShowWindow(co::SW::SHOW);
+    }
+
+    fn init_gender(&self, save: &Save) {
+        // Clear selected buttons, if any.
+        for radio_button in self.gender_radio_group.iter() {
+            radio_button.select(false);
+        }
+
         let gender = save.player_gender();
         let gender_radio_index = match gender {
             Gender::Boy => 0,
             Gender::Girl => 1,
         };
-        // TODO: Clear the previous buttons to handle subsequent loads.
-        let gender_radio_button = &self.gender_radio_group[gender_radio_index];
-        gender_radio_button.select(true);
-
-        self.window.hwnd().ShowWindow(co::SW::SHOW);
+        self.gender_radio_group[gender_radio_index].select(true);
     }
 }
 
