@@ -63,7 +63,7 @@ fn main() {
         return;
     }
 
-    if let Err(x) = firered_save_editor::run() {
+    if let Err(x) = fled::run() {
         eprintln!("error: {}", x.to_string());
         std::process::exit(1);
     }

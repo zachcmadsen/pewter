@@ -1,5 +1,5 @@
 [package]
-name = "firered-save-editor"
+name = "fled"
 version = "0.1.0"
 edition = "2021"
 

@@ -114,7 +114,7 @@ pub fn run() -> Result<()> {
     }])?;
 
     let main_window = gui::WindowMain::new(gui::WindowMainOpts {
-        title: "Firered Save Editor".to_owned(),
+        title: "fled".to_owned(),
         size: (400, 200),
         menu,
         accel_table: Some(accel_table),
