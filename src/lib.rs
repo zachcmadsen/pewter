@@ -1,13 +1,17 @@
+mod log;
 mod save;
+
+pub use log::Logger;
 
 use std::fs;
 
-use crate::save::{Gender, Save};
 use anyhow::Result;
 use winsafe::{
     co, gui, prelude::*, CoCreateInstance, CoInitializeEx, IFileOpenDialog,
     MenuItem, ACCEL, HACCEL, HMENU,
 };
+
+use crate::save::{Gender, Save};
 
 // The values for command IDs are arbitrary.
 const FILE_OPEN_COMMAND_ID: u16 = 0;

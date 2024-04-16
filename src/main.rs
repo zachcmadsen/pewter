@@ -1,3 +1,8 @@
+use fled::Logger;
+use log::{error, warn, LevelFilter};
+
+static LOGGER: Logger = Logger;
+
 const USAGE: &str = "\
 Usage: fled [OPTIONS] [FILE]
 
@@ -26,7 +31,6 @@ fn parse_args() -> Args {
         return args;
     }
 
-    // TODO: Add debug and warn logging.
     args.filename = match pargs.opt_free_from_str() {
         Ok(Some(filename)) => Some(filename),
         _ => None,
@@ -34,19 +38,28 @@ fn parse_args() -> Args {
 
     let remaining = pargs.finish();
     if !remaining.is_empty() {
-        eprint!("warn: ignoring extra arguments: ");
+        let mut remaining_str = String::new();
         if let Some((last, remaining)) = remaining.split_last() {
             for arg in remaining {
-                eprint!("{} ", arg.to_string_lossy());
+                remaining_str.push_str(&arg.to_string_lossy());
+                remaining_str.push(' ');
             }
-            eprint!("{}", last.to_string_lossy());
+            remaining_str.push_str(&last.to_string_lossy());
         }
+
+        warn!("ignoring extra arguments: {}", remaining_str);
     }
 
     args
 }
 
 fn main() {
+    if log::set_logger(&LOGGER).is_err() {
+        eprintln!("error: could not initialize logger");
+        std::process::exit(1);
+    }
+    log::set_max_level(LevelFilter::Debug);
+
     let args = parse_args();
 
     if args.help {
@@ -64,7 +77,8 @@ fn main() {
     }
 
     if let Err(x) = fled::run() {
-        eprintln!("error: {}", x.to_string());
+        // TODO: Double check that this prints the context from anyhow errors.
+        error!("{}", x.to_string());
         std::process::exit(1);
     }
 }
