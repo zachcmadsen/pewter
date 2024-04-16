@@ -35,8 +35,11 @@ fn parse_args() -> Args {
     let remaining = pargs.finish();
     if !remaining.is_empty() {
         eprint!("warn: ignoring extra arguments: ");
-        for arg in remaining {
-            eprint!("{} ", arg.to_string_lossy());
+        if let Some((last, remaining)) = remaining.split_last() {
+            for arg in remaining {
+                eprint!("{} ", arg.to_string_lossy());
+            }
+            eprint!("{}", last.to_string_lossy());
         }
     }
 
