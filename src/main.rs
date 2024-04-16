@@ -9,32 +9,29 @@ struct Args {
     filename: Option<String>,
 }
 
-fn parse_args() -> Option<Args> {
+fn parse_args() -> Result<Args, lexopt::Error> {
+    use lexopt::prelude::*;
+
     let mut args = Args { help: false, version: false, filename: None };
 
-    let mut pargs = pico_args::Arguments::from_env();
-
-    if pargs.contains(["-h", "--help"]) {
-        args.help = true;
-        return Some(args);
+    let mut parser = lexopt::Parser::from_env();
+    while let Some(arg) = parser.next().unwrap() {
+        match arg {
+            Short('h') | Long("help") => {
+                args.help = true;
+            }
+            Short('v') | Long("version") => {
+                args.version = true;
+            }
+            Value(val) if args.filename.is_none() => {
+                // TODO: Pretty sure I could handle this better.
+                args.filename = Some(val.to_string_lossy().into_owned());
+            }
+            _ => return Err(arg.unexpected()),
+        }
     }
 
-    if pargs.contains(["-v", "--version"]) {
-        args.version = true;
-        return Some(args);
-    }
-
-    args.filename = match pargs.opt_free_from_str() {
-        Ok(Some(filename)) => Some(filename),
-        _ => None,
-    };
-
-    let remaining = pargs.finish();
-    if !remaining.is_empty() {
-        return None;
-    }
-
-    Some(args)
+    Ok(args)
 }
 
 fn usage() {
@@ -56,9 +53,12 @@ fn main() {
     }
     log::set_max_level(LevelFilter::Debug);
 
-    let Some(args) = parse_args() else {
-        usage();
-        std::process::exit(1);
+    let args = match parse_args() {
+        Ok(args) => args,
+        Err(err) => {
+            error!("{}", err);
+            std::process::exit(1);
+        }
     };
 
     if args.help {
