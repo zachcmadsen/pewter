@@ -118,6 +118,7 @@ pub fn run() -> Result<()> {
     }])?;
 
     let main_window = gui::WindowMain::new(gui::WindowMainOpts {
+        // TODO: Get the program name from CARGO_PKG_NAME env var.
         title: "fled".to_owned(),
         size: (400, 200),
         menu,
