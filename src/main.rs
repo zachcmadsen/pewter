@@ -15,7 +15,7 @@ fn parse_args() -> Result<Args, lexopt::Error> {
     let mut args = Args { help: false, version: false, filename: None };
 
     let mut parser = lexopt::Parser::from_env();
-    while let Some(arg) = parser.next().unwrap() {
+    while let Some(arg) = parser.next()? {
         match arg {
             Short('h') | Long("help") => {
                 args.help = true;
