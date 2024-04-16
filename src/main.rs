@@ -1,5 +1,5 @@
 const USAGE: &str = "\
-Usage: fled [OPTIONS] FILE
+Usage: fled [OPTIONS] [FILE]
 
 Options:
     -h, --help       Print help info and exit
