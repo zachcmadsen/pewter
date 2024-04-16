@@ -3,13 +3,6 @@ use log::{error, LevelFilter};
 
 static LOGGER: Logger = Logger;
 
-const USAGE: &str = "\
-Usage: fled [OPTIONS] [FILE]
-
-Options:
-    -h, --help       Print help info and exit
-    -v, --version    Print version info and exit";
-
 struct Args {
     help: bool,
     version: bool,
@@ -44,6 +37,18 @@ fn parse_args() -> Option<Args> {
     Some(args)
 }
 
+fn usage() {
+    println!(
+        "\
+Usage: {} [OPTIONS] [FILE]
+
+Options:
+    -h, --help       Print help info and exit
+    -v, --version    Print version info and exit",
+        env!("CARGO_PKG_NAME")
+    );
+}
+
 fn main() {
     if log::set_logger(&LOGGER).is_err() {
         eprintln!("error: could not initialize logger");
@@ -52,18 +57,19 @@ fn main() {
     log::set_max_level(LevelFilter::Debug);
 
     let Some(args) = parse_args() else {
-        println!("{}", USAGE);
+        usage();
         std::process::exit(1);
     };
 
     if args.help {
-        println!("{}", USAGE);
+        usage();
         return;
     }
 
     if args.version {
         println!(
-            "fled {} ({})",
+            "{} {} ({})",
+            env!("CARGO_PKG_NAME"),
             env!("CARGO_PKG_VERSION"),
             env!("COMMIT_HASH")
         );
