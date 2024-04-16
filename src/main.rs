@@ -1,5 +1,5 @@
 use fled::Logger;
-use log::{error, warn, LevelFilter};
+use log::{error, LevelFilter};
 
 static LOGGER: Logger = Logger;
 
@@ -16,19 +16,19 @@ struct Args {
     filename: Option<String>,
 }
 
-fn parse_args() -> Args {
+fn parse_args() -> Option<Args> {
     let mut args = Args { help: false, version: false, filename: None };
 
     let mut pargs = pico_args::Arguments::from_env();
 
     if pargs.contains(["-h", "--help"]) {
         args.help = true;
-        return args;
+        return Some(args);
     }
 
     if pargs.contains(["-v", "--version"]) {
         args.version = true;
-        return args;
+        return Some(args);
     }
 
     args.filename = match pargs.opt_free_from_str() {
@@ -38,19 +38,10 @@ fn parse_args() -> Args {
 
     let remaining = pargs.finish();
     if !remaining.is_empty() {
-        let mut remaining_str = String::new();
-        if let Some((last, remaining)) = remaining.split_last() {
-            for arg in remaining {
-                remaining_str.push_str(&arg.to_string_lossy());
-                remaining_str.push(' ');
-            }
-            remaining_str.push_str(&last.to_string_lossy());
-        }
-
-        warn!("ignoring extra arguments: {}", remaining_str);
+        return None;
     }
 
-    args
+    Some(args)
 }
 
 fn main() {
@@ -60,7 +51,10 @@ fn main() {
     }
     log::set_max_level(LevelFilter::Debug);
 
-    let args = parse_args();
+    let Some(args) = parse_args() else {
+        println!("{}", USAGE);
+        std::process::exit(1);
+    };
 
     if args.help {
         println!("{}", USAGE);
