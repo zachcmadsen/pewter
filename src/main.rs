@@ -48,6 +48,9 @@ Options:
 
 fn main() {
     if log::set_logger(&LOGGER).is_err() {
+        // TODO: Do we need to exit if set_logger fails? It only fails if it's
+        // already been set, which shouldn't happen. It's not required for the
+        // program to run...
         eprintln!("error: could not initialize logger");
         std::process::exit(1);
     }
