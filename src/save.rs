@@ -51,7 +51,7 @@ impl Save {
         }
 
         let save_blocks = &buf[..(BLOCK_SIZE * 2)];
-        let (block_a, block_b) = save_blocks.split_at(BLOCK_SIZE as usize);
+        let (block_a, block_b) = save_blocks.split_at(BLOCK_SIZE);
 
         let save_index_a = read_u32(&block_a[SAVE_INDEX_RANGE]);
         let save_index_b = read_u32(&block_b[SAVE_INDEX_RANGE]);

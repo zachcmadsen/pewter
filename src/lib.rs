@@ -23,10 +23,12 @@ struct EditorWindow {
 
 impl EditorWindow {
     fn new(parent: &gui::WindowMain) -> EditorWindow {
-        let mut options: gui::WindowControlOpts = Default::default();
-        // Match the background color of the parent window.
-        options.class_bg_brush = gui::WindowMainOpts::default().class_bg_brush;
-        options.style = options.style & !co::WS::VISIBLE;
+        let mut options = gui::WindowControlOpts {
+            // Match the background color of the parent window.
+            class_bg_brush: gui::WindowMainOpts::default().class_bg_brush,
+            ..Default::default()
+        };
+        options.style &= !co::WS::VISIBLE;
         // TODO: The size of EditorWindow needs to say in sync with the main window. Listen
         // on an event for window size changes?
         options.size = (400, 200);
