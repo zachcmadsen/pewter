@@ -1,10 +1,6 @@
-[package]
-name = "fled"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-anyhow = "1.0.81"
-lexopt = "0.3.0"
-log = "0.4.21"
-winsafe = { version = "0.0.20", features = ["gui"] }
+[workspace]
+members = [
+    "fled",
+    "frontend",
+]
+resolver = "2"

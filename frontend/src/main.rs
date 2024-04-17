@@ -1,4 +1,4 @@
-use fled::Logger;
+use frontend::Logger;
 use log::{error, LevelFilter};
 
 static LOGGER: Logger = Logger;
@@ -79,7 +79,7 @@ fn main() {
         return;
     }
 
-    if let Err(x) = fled::run() {
+    if let Err(x) = frontend::run() {
         // TODO: Double check that this prints the context from anyhow errors.
         error!("{}", x.to_string());
         std::process::exit(1);

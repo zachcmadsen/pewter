@@ -1,5 +1,4 @@
 mod log;
-mod save;
 
 pub use log::Logger;
 
@@ -11,7 +10,7 @@ use winsafe::{
     MenuItem, ACCEL, HACCEL, HMENU,
 };
 
-use crate::save::{Gender, Save};
+use fled::{Gender, Save};
 
 // The values for command IDs are arbitrary.
 const FILE_OPEN_COMMAND_ID: u16 = 0;
