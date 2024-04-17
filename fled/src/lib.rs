@@ -1,6 +1,4 @@
-use std::ops::Range;
-
-use anyhow::{bail, Result};
+use std::{fmt, ops::Range};
 
 /// The size of a game save in bytes.
 const SAVE_SIZE: usize = 131072;
@@ -30,6 +28,24 @@ const TRAINER_INFO_SECTION_ID: u16 = 0;
 /// The offset of the player gender value in the trainer info section.
 const PLAYER_GENDER_OFFSET: usize = 0x0008;
 
+pub enum Error {
+    InvalidSave,
+}
+
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::InvalidSave => write!(f, "invalid save file"),
+        }
+    }
+}
+
 /// The player gender.
 #[derive(Debug)]
 pub enum Gender {
@@ -45,9 +61,9 @@ pub struct Save {
 }
 
 impl Save {
-    pub fn new(buf: Vec<u8>) -> Result<Save> {
+    pub fn new(buf: Vec<u8>) -> Result<Save, Error> {
         if buf.len() < SAVE_SIZE {
-            bail!("the game save is too small");
+            return Err(Error::InvalidSave);
         }
 
         let save_blocks = &buf[..(BLOCK_SIZE * 2)];
@@ -86,7 +102,7 @@ impl Save {
     }
 }
 
-fn validate_sections(block: &[u8]) -> Result<[usize; 14]> {
+fn validate_sections(block: &[u8]) -> Result<[usize; 14], Error> {
     debug_assert!(block.len() == BLOCK_SIZE);
 
     let mut seen_section_ids = [false; 14];
@@ -96,16 +112,16 @@ fn validate_sections(block: &[u8]) -> Result<[usize; 14]> {
 
     for (i, section) in block.chunks_exact(SECTION_SIZE).enumerate() {
         if read_u32(&block[SAVE_INDEX_RANGE]) != save_index {
-            bail!("not all sections have the same save index");
+            return Err(Error::InvalidSave);
         }
 
         let section_id = read_u16(&section[SECTION_ID_RANGE]);
         if !(0..=13).contains(&section_id) {
-            bail!("invalid section ID");
+            return Err(Error::InvalidSave);
         }
 
         if seen_section_ids[section_id as usize] {
-            bail!("repeat section ID");
+            return Err(Error::InvalidSave);
         } else {
             seen_section_ids[section_id as usize] = true;
         }
@@ -116,7 +132,7 @@ fn validate_sections(block: &[u8]) -> Result<[usize; 14]> {
     // I think this condition is always true after the loop, but I'll keep it
     // in anyways.
     if !seen_section_ids.iter().all(|b| *b) {
-        bail!("every section didn't appear once");
+        return Err(Error::InvalidSave);
     }
 
     Ok(section_offsets)

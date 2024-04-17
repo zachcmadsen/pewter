@@ -4,9 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.81"
+fled = { path = "../fled" }
 lexopt = "0.3.0"
 log = "0.4.21"
 winsafe = { version = "0.0.20", features = ["gui"] }
-
-fled = { path = "../fled" }

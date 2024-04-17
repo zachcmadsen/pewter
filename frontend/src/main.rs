@@ -79,9 +79,8 @@ fn main() {
         return;
     }
 
-    if let Err(x) = frontend::run() {
-        // TODO: Double check that this prints the context from anyhow errors.
-        error!("{}", x.to_string());
+    if let Err(err) = frontend::run() {
+        error!("{}", err);
         std::process::exit(1);
     }
 }

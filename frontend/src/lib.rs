@@ -4,10 +4,9 @@ pub use log::Logger;
 
 use std::fs;
 
-use anyhow::Result;
 use winsafe::{
-    co, gui, prelude::*, CoCreateInstance, CoInitializeEx, IFileOpenDialog,
-    MenuItem, ACCEL, HACCEL, HMENU,
+    co, gui, prelude::*, AnyResult, CoCreateInstance, CoInitializeEx,
+    IFileOpenDialog, MenuItem, ACCEL, HACCEL, HMENU,
 };
 
 use fled::{Gender, Save};
@@ -102,7 +101,7 @@ impl EditorWindow {
     }
 }
 
-pub fn run() -> Result<()> {
+pub fn run() -> AnyResult<i32> {
     let file_submenu = HMENU::CreatePopupMenu()?;
     file_submenu.append_item(&[MenuItem::Entry(
         FILE_OPEN_COMMAND_ID,
@@ -158,7 +157,5 @@ pub fn run() -> Result<()> {
         co::COINIT::APARTMENTTHREADED | co::COINIT::DISABLE_OLE1DDE,
     )?;
 
-    main_window.run_main(None).unwrap();
-
-    Ok(())
+    main_window.run_main(None)
 }
