@@ -20,7 +20,7 @@ class App final : public Fl_Double_Window {
     Fl_Flex *flex;
     Fl_Input *player_name_input;
 
-    static void open_file_callback(Fl_Widget *w, void *user_data);
+    static void open_file_callback(Fl_Widget *w, void *app);
 };
 
 }

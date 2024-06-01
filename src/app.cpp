@@ -1,7 +1,12 @@
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
+#include <span>
 #include <string>
 #include <sys/stat.h>
 #include <thread>
+#include <vector>
 
 #include <FL/Enumerations.H>
 #include <FL/Fl.H>
@@ -20,6 +25,127 @@
 #include "log.h"
 
 namespace pewter {
+
+/// The size of a section in bytes.
+inline constexpr size_t section_size = 4096;
+/// The number of sections in a block.
+inline constexpr size_t sections = 14;
+
+/// Reads a 16-bit unsigned integer from `bytes`.
+uint16_t read_u16(std::span<const uint8_t, 2> bytes) {
+    return bytes[0] | bytes[1] << 8;
+}
+
+/// Reads a 32-bit unsigned integer from `bytes`.
+uint32_t read_u32(std::span<const uint8_t, 4> bytes) {
+    return bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24;
+}
+
+/// Reads the section ID from `section`.
+uint16_t read_section_id(std::span<const uint8_t, section_size> section) {
+    constexpr size_t section_id_offset = 0x0FF4;
+    return read_u16(section.subspan<section_id_offset, 2>());
+}
+
+/// Reads the section checksum from `section`.
+uint16_t read_checksum(std::span<const uint8_t, section_size> section) {
+    constexpr size_t checksum_offset = 0x0FF6;
+    return read_u16(section.subspan<checksum_offset, 2>());
+}
+
+/// Reads the save index from `section`.
+uint32_t read_save_index(std::span<const uint8_t, section_size> section) {
+    constexpr size_t save_index_offset = 0x0FFC;
+    return read_u32(section.subspan<save_index_offset, 4>());
+}
+
+/// Computes the checksum of a section.
+uint16_t
+compute_section_checksum(std::span<const uint8_t, section_size> section) {
+    constexpr std::array<uint16_t, sections> checksum_bytes_per_section{
+        3884, 3968, 3968, 3968, 3948, 3968, 3968,
+        3968, 3968, 3968, 3968, 3968, 3968, 2000};
+
+    auto section_id = read_section_id(section);
+    auto bytes = checksum_bytes_per_section[section_id];
+    uint32_t checksum = 0;
+    for (int i = 0; i < bytes; i += 4) {
+        checksum += read_u32(section.subspan(i).first<4>());
+    }
+
+    return static_cast<uint16_t>(checksum) +
+           static_cast<uint16_t>(checksum >> 16);
+}
+
+/// Validates a game save `block`.
+void validate_block(std::span<const uint8_t, 57344> block) {
+    auto first_section = block.first<section_size>();
+    auto first_save_index = read_save_index(first_section);
+
+    // TODO: Validate the section signature and that each section appears only
+    // once. I could also validate that the sections are in order, but that's
+    // probably not necessary.
+    for (int i = 0; i < sections; ++i) {
+        auto section = block.subspan(i * section_size).first<section_size>();
+
+        auto checksum = compute_section_checksum(section);
+        auto actual_checksum = read_checksum(section);
+        if (actual_checksum != checksum) {
+            log("checksum mismatch for section: {} != {}", actual_checksum,
+                checksum);
+        }
+
+        auto save_index = read_save_index(section);
+        if (save_index != first_save_index) {
+            log("save index mismatch: {} != {}", first_save_index, save_index);
+        }
+    }
+
+    log("block is valid");
+}
+
+/// Parses a save file and updates the GUI thread with the results.
+void parse_save(void *app, std::string filename) {
+    log("parsing file '{}'", filename);
+
+    struct stat stat;
+    if (fl_stat(filename.c_str(), &stat)) {
+        log("fl_state failed");
+        return;
+    }
+
+    if (stat.st_size < 131072) {
+        log("invalid sav file size: {}", stat.st_size);
+        return;
+    }
+
+    FILE *fp = fl_fopen(filename.c_str(), "rb");
+    if (!fp) {
+        log("could not open file '{}'", filename);
+        return;
+    }
+
+    // TODO: Don't read in more than the save size.
+    std::vector<uint8_t> save(stat.st_size);
+    auto read = fread(save.data(), sizeof(uint8_t), stat.st_size, fp);
+    fclose(fp);
+    if (read != stat.st_size) {
+        log("failed to read file '{}'", filename);
+        return;
+    }
+
+    validate_block(std::span<uint8_t, 57344>(save.data(), 57344));
+
+    // Message *msg = new Message();
+    // msg->app = static_cast<App *>(app);
+    // msg->file_size = stat.st_size;
+    // Fl::awake(show_file_size_callback, (void *)msg);
+}
+
+struct Message {
+    App *app;
+    int file_size;
+};
 
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
     // The ampersand in front of the text makes the first letter a hotkey.
@@ -43,7 +169,7 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     int w, h;
     player_name_label->measure_label(w, h);
     player_name_label->align(FL_ALIGN_INSIDE);
-    player_name_row->fixed(player_name_label, w + 5);
+    player_name_row->fixed(player_name_label, w);
 
     player_name_input = new Fl_Input(0, 0, 0, 0);
     // player_name_input->align(FL_ALIGN_LEFT | FL_ALIGN_TOP);
@@ -59,84 +185,38 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     end();
 }
 
-static void try_read_file(std::string filename) {
-    log("selected file: {}", filename.c_str());
-    // std::cout << "selected file: " << filename.c_str() << '\n';
-
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(2000ms);
-    FILE *fp = fl_fopen(filename.c_str(), "rb");
-
-    struct stat stat;
-    if (fl_stat(filename.c_str(), &stat)) {
-        fl_alert("Failed to process file '%s'", filename.c_str());
-        return;
-    }
-
-    // std::cout << "file size: " << stat.st_size << '\n';
-    log("file size: {}", stat.st_size);
-
-    // std::vector<uint8_t> save(stat.st_size);
-    // auto bytes_read = fread(save.data(), sizeof(uint8_t), stat.st_size, fp);
-
-    // if (bytes_read == stat.st_size) {
-    //     log("successfully read file!");
-    // }
-
-    // delete[] filename;
+void show_file_size_callback(void *user_data) {
+    Message *msg = static_cast<Message *>(user_data);
+    fl_alert("the size of the file is %d", msg->file_size);
+    delete msg;
 }
 
-void App::open_file_callback(Fl_Widget *w, void *userdata) {
-    App *app = static_cast<App *>(userdata);
-
-    // TODO: Reset stuff if there was already a sav loaded? Also display
-    // a confirmation prompt if they would lose work?
-
+void App::open_file_callback(Fl_Widget *w, void *app) {
+    // TODO: Show a confirmation prompt if there's already a save loaded.
     Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_FILE);
     file_chooser.filter("*.sav");
-
-    if (file_chooser.show()) {
-        // TODO: Handle error and cancel cases.
-        return;
+    if (int rc = file_chooser.show()) {
+        switch (rc) {
+        case -1:
+            fl_alert("An error occurred while trying to open a file.");
+            log("failed to choose a file: {}", file_chooser.errmsg());
+            break;
+        case 1:
+            return;
+        default:
+            log("unxpected return code: {}", rc);
+            return;
+        }
     }
 
     const char *filename = file_chooser.filename();
     if (!filename) {
+        log("unexpected NULL filename");
         return;
     }
 
-    // char *filename_copy = new char[strlen(filename) + 1];
-    // strcpy(filename_copy, filename);
-    std::thread thread(try_read_file, std::string(filename));
+    std::thread thread(parse_save, app, std::string(filename));
     thread.detach();
-
-    // TODO: Show loading indicator or something.
-
-    // std::cout << "selected file: " << filename << '\n';
-    // FILE *fp = fl_fopen(filename, "rb");
-
-    // struct stat stat;
-    // if (fl_stat(filename, &stat)) {
-    //     fl_alert("Failed to process file '%s'", filename);
-    //     return;
-    // }
-
-    // std::cout << "file size: " << stat.st_size << '\n';
-
-    // // TODO: Use fmt::print to log everything to stderr. Add an internal
-    // logging
-    // // system later.
-
-    // app->save = std::vector<uint8_t>(stat.st_size);
-    // auto bytes_read =
-    //     fread(app->save.data(), sizeof(uint8_t), stat.st_size, fp);
-
-    // if (bytes_read == stat.st_size) {
-    //     std::cout << "successfully read file!" << '\n';
-    // }
-
-    // app->player_name_input->value("Zach");
-    // app->flex->show();
 }
 
 }
