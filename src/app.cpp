@@ -1,10 +1,25 @@
+#include <cstdio>
+#include <string>
+#include <sys/stat.h>
 #include <thread>
 
+#include <FL/Enumerations.H>
+#include <FL/Fl.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Flex.H>
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Menu_Item.H>
 #include <FL/Fl_Native_File_Chooser.H>
+#include <FL/fl_ask.H>
+#include <FL/fl_utf8.h>
+#include <FL/platform_types.h>
 
 #include "app.h"
 #include "log.h"
+
+namespace pewter {
 
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
     // The ampersand in front of the text makes the first letter a hotkey.
@@ -122,4 +137,6 @@ void App::open_file_callback(Fl_Widget *w, void *userdata) {
 
     // app->player_name_input->value("Zach");
     // app->flex->show();
+}
+
 }

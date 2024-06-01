@@ -4,10 +4,13 @@
 #include <FL/Fl_Flex.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Menu_Bar.H>
+#include <FL/Fl_Widget.H>
+
+namespace pewter {
 
 // TODO: Child widgets get cleaned up by Fl_Double_Window's destructor. Check
 // if anything needs to be cleaned up manually.
-class App : public Fl_Double_Window {
+class App final : public Fl_Double_Window {
   public:
     App();
 
@@ -19,3 +22,5 @@ class App : public Fl_Double_Window {
 
     static void open_file_callback(Fl_Widget *w, void *user_data);
 };
+
+}
