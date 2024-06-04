@@ -17,6 +17,7 @@
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Item.H>
 #include <FL/Fl_Native_File_Chooser.H>
+#include <FL/Fl_Radio_Button.H>
 #include <FL/fl_ask.H>
 #include <FL/fl_utf8.h>
 #include <FL/platform_types.h>
@@ -30,6 +31,11 @@ namespace pewter {
 inline constexpr size_t section_size = 4096;
 /// The number of sections in a block.
 inline constexpr size_t sections = 14;
+
+/// Reads a 8-bit unsigned integer from `bytes`.
+uint16_t read_u8(std::span<const uint8_t, 1> bytes) {
+    return bytes[0];
+}
 
 /// Reads a 16-bit unsigned integer from `bytes`.
 uint16_t read_u16(std::span<const uint8_t, 2> bytes) {
@@ -104,6 +110,37 @@ void validate_block(std::span<const uint8_t, 57344> block) {
     log("block is valid");
 }
 
+Gender read_gender(std::span<const uint8_t, section_size> section) {
+    constexpr size_t gender_offset = 0x0008;
+
+    Gender gender;
+    switch (section[gender_offset]) {
+    case 0x00:
+        gender = Gender::Boy;
+        break;
+    case 0x01:
+        gender = Gender::Girl;
+        break;
+    default:
+        log("invalid player gender: {}", section[gender_offset]);
+        gender = Gender::None;
+        break;
+    }
+
+    return gender;
+}
+
+struct Message {
+    App *app;
+    Save save;
+};
+
+void show_save_callback(void *data) {
+    Message *message = static_cast<Message *>(data);
+    message->app->show_save(message->save);
+    delete message;
+}
+
 /// Parses a save file and updates the GUI thread with the results.
 void parse_save(void *app, std::string filename) {
     log("parsing file '{}'", filename);
@@ -134,18 +171,25 @@ void parse_save(void *app, std::string filename) {
         return;
     }
 
-    validate_block(std::span<uint8_t, 57344>(save.data(), 57344));
+    auto block = std::span<uint8_t, 57344>(save.data(), 57344);
+    validate_block(block);
 
-    // Message *msg = new Message();
-    // msg->app = static_cast<App *>(app);
-    // msg->file_size = stat.st_size;
-    // Fl::awake(show_file_size_callback, (void *)msg);
+    Message *message = new Message();
+    message->app = static_cast<App *>(app);
+
+    for (int i = 0; i < sections; ++i) {
+        auto section = block.subspan(i * section_size).first<section_size>();
+        auto section_id = read_section_id(section);
+
+        switch (section_id) {
+        case 0: // trainer info
+            message->save.gender = read_gender(section);
+            break;
+        };
+    }
+
+    Fl::awake(show_save_callback, static_cast<void *>(message));
 }
-
-struct Message {
-    App *app;
-    int file_size;
-};
 
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
     // The ampersand in front of the text makes the first letter a hotkey.
@@ -157,38 +201,61 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
     menu_bar->copy(menu_items);
 
-    flex = new Fl_Flex(0, 30, 340, 150, Fl_Flex::VERTICAL);
-    flex->margin(5);
+    player_container = new Fl_Flex(0, 30, 340, 150, Fl_Flex::VERTICAL);
+    player_container->margin(5);
 
     Fl_Flex *player_name_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
 
     // It doesn't matter what we put the size and position of the widgets
     // since they'll be resized anyways.
-    Fl_Box *player_name_label = new Fl_Box(0, 0, 0, 0, "Player name:");
+    Fl_Box *player_name_label = new Fl_Box(0, 0, 0, 0, "Name:");
+    player_name_label->align(FL_ALIGN_INSIDE);
+
     // TODO: Investigate how measure_label works.
     int w, h;
     player_name_label->measure_label(w, h);
-    player_name_label->align(FL_ALIGN_INSIDE);
-    player_name_row->fixed(player_name_label, w);
+    player_name_row->fixed(player_name_label, w + 5);
 
     player_name_input = new Fl_Input(0, 0, 0, 0);
-    // player_name_input->align(FL_ALIGN_LEFT | FL_ALIGN_TOP);
     player_name_input->value("");
     player_name_input->maximum_size(7);
 
     player_name_row->end();
-    flex->fixed(player_name_row, 30);
+    player_container->fixed(player_name_row, 30);
 
-    // flex->hide();
-    flex->end();
+    Fl_Flex *player_gender_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    Fl_Box *player_gender_label = new Fl_Box(0, 0, 0, 0, "Gender:");
+    player_gender_label->align(FL_ALIGN_INSIDE);
+
+    player_gender_label->measure_label(w, h);
+    player_gender_row->fixed(player_gender_label, w + 5);
+
+    boy_radio_button = new Fl_Radio_Button(0, 0, 0, 0, "Boy");
+    girl_radio_button = new Fl_Radio_Button(0, 0, 0, 0, "Girl");
+    player_gender_row->end();
+    player_container->fixed(player_gender_row, 30);
+
+    player_container->gap(5);
+
+    player_container->hide();
+    player_container->end();
 
     end();
 }
 
-void show_file_size_callback(void *user_data) {
-    Message *msg = static_cast<Message *>(user_data);
-    fl_alert("the size of the file is %d", msg->file_size);
-    delete msg;
+void App::show_save(Save save) {
+    player_name_input->value("ZACH");
+    switch (save.gender) {
+    case Gender::Boy:
+        boy_radio_button->setonly();
+        break;
+    case Gender::Girl:
+        girl_radio_button->setonly();
+        break;
+    case Gender::None:
+        break;
+    }
+    player_container->show();
 }
 
 void App::open_file_callback(Fl_Widget *w, void *app) {
@@ -215,6 +282,10 @@ void App::open_file_callback(Fl_Widget *w, void *app) {
         return;
     }
 
+    // TODO: Protect against opening multiple files at once, i.e., multiple
+    // background threads. We could use a different model where one background
+    // thread is created at startup. We send messages back and forth. That
+    // might make the problem easier.
     std::thread thread(parse_save, app, std::string(filename));
     thread.detach();
 }
