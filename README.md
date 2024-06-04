@@ -1,2 +1,2 @@
-# fled
-A Pokemon **F**ireRed and **L**eafGreen save **ed**itor.
+# Pewter
+A Pokemon FireRed and LeafGreen save editor.
