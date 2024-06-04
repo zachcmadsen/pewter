@@ -1,6 +1,6 @@
 #include <FL/Fl.H>
 
-#include "app.h"
+#include "app.hpp"
 
 int main() {
     pewter::App *app = new pewter::App();

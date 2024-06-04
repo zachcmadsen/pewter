@@ -22,8 +22,8 @@
 #include <FL/fl_utf8.h>
 #include <FL/platform_types.h>
 
-#include "app.h"
-#include "log.h"
+#include "app.hpp"
+#include "log.hpp"
 
 namespace pewter {
 
