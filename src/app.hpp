@@ -4,7 +4,7 @@
 #include <FL/Fl_Flex.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Menu_Bar.H>
-#include <FL/Fl_Radio_Button.H>
+#include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Widget.H>
 
 namespace pewter {
@@ -32,8 +32,8 @@ class App final : public Fl_Double_Window {
     Fl_Menu_Bar *menu_bar;
     Fl_Flex *player_container;
     Fl_Input *player_name_input;
-    Fl_Radio_Button *boy_radio_button;
-    Fl_Radio_Button *girl_radio_button;
+    Fl_Round_Button *boy_radio_button;
+    Fl_Round_Button *girl_radio_button;
 
     // TODO: Make this a function in app.cpp.
     static void open_file_callback(Fl_Widget *w, void *app);

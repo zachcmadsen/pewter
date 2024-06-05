@@ -11,13 +11,14 @@
 #include <FL/Enumerations.H>
 #include <FL/Fl.H>
 #include <FL/Fl_Box.H>
+#include <FL/Fl_Button.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Flex.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Menu_Bar.H>
 #include <FL/Fl_Menu_Item.H>
 #include <FL/Fl_Native_File_Chooser.H>
-#include <FL/Fl_Radio_Button.H>
+#include <FL/Fl_Round_Button.H>
 #include <FL/fl_ask.H>
 #include <FL/fl_utf8.h>
 #include <FL/platform_types.h>
@@ -230,8 +231,10 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     player_gender_label->measure_label(w, h);
     player_gender_row->fixed(player_gender_label, w + 5);
 
-    boy_radio_button = new Fl_Radio_Button(0, 0, 0, 0, "Boy");
-    girl_radio_button = new Fl_Radio_Button(0, 0, 0, 0, "Girl");
+    boy_radio_button = new Fl_Round_Button(0, 0, 0, 0, "Boy");
+    boy_radio_button->type(FL_RADIO_BUTTON);
+    girl_radio_button = new Fl_Round_Button(0, 0, 0, 0, "Girl");
+    girl_radio_button->type(FL_RADIO_BUTTON);
     player_gender_row->end();
     player_container->fixed(player_gender_row, 30);
 
