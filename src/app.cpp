@@ -193,14 +193,9 @@ void parse_save(void *app, std::string filename) {
 }
 
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
-    // The ampersand in front of the text makes the first letter a hotkey.
-    Fl_Menu_Item menu_items[] = {
-        {"&File", 0, 0, 0, FL_SUBMENU},
-        {"&Open...", FL_COMMAND + 'o', open_file_callback, this},
-        {},
-        {}};
     menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
-    menu_bar->copy(menu_items);
+    // The ampersand in front of the text makes the first letter a hotkey.
+    menu_bar->add("&File/&Open...", FL_CTRL + 'o', open_file_callback, this);
 
     player_container = new Fl_Flex(0, 30, 340, 150, Fl_Flex::VERTICAL);
     player_container->margin(5);
