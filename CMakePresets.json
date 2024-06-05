@@ -1,0 +1,19 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "dev",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "FLTK_BUILD_FLTK_OPTIONS": "OFF",
+                "FLTK_BUILD_FLUID": "OFF",
+                "FLTK_BUILD_FORMS": "OFF",
+                "FLTK_BUILD_GL": "OFF"
+            }
+        }
+    ]
+}

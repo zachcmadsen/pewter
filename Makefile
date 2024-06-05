@@ -2,7 +2,7 @@
 default: build
 
 build/build.ninja:
-	cmake -S . -B build
+	cmake --preset dev
 
 .PHONY: build
 build: build/build.ninja
