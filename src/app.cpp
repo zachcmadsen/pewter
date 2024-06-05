@@ -92,7 +92,7 @@ void validate_block(std::span<const uint8_t, 57344> block) {
     // TODO: Validate the section signature and that each section appears only
     // once. I could also validate that the sections are in order, but that's
     // probably not necessary.
-    for (int i = 0; i < sections; ++i) {
+    for (size_t i = 0; i < sections; ++i) {
         auto section = block.subspan(i * section_size).first<section_size>();
 
         auto checksum = compute_section_checksum(section);
@@ -167,7 +167,7 @@ void parse_save(void *app, std::string filename) {
     std::vector<uint8_t> save(stat.st_size);
     auto read = fread(save.data(), sizeof(uint8_t), stat.st_size, fp);
     fclose(fp);
-    if (read != stat.st_size) {
+    if (read != static_cast<size_t>(stat.st_size)) {
         log("failed to read file '{}'", filename);
         return;
     }
@@ -178,7 +178,7 @@ void parse_save(void *app, std::string filename) {
     Message *message = new Message();
     message->app = static_cast<App *>(app);
 
-    for (int i = 0; i < sections; ++i) {
+    for (size_t i = 0; i < sections; ++i) {
         auto section = block.subspan(i * section_size).first<section_size>();
         auto section_id = read_section_id(section);
 
@@ -197,8 +197,8 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     Fl_Menu_Item menu_items[] = {
         {"&File", 0, 0, 0, FL_SUBMENU},
         {"&Open...", FL_COMMAND + 'o', open_file_callback, this},
-        {0},
-        {0}};
+        {},
+        {}};
     menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
     menu_bar->copy(menu_items);
 
@@ -261,7 +261,7 @@ void App::show_save(Save save) {
     player_container->show();
 }
 
-void App::open_file_callback(Fl_Widget *w, void *app) {
+void App::open_file_callback(Fl_Widget *, void *app) {
     // TODO: Show a confirmation prompt if there's already a save loaded.
     Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_FILE);
     file_chooser.filter("*.sav");

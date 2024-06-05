@@ -12,7 +12,8 @@
                 "FLTK_BUILD_FLTK_OPTIONS": "OFF",
                 "FLTK_BUILD_FLUID": "OFF",
                 "FLTK_BUILD_FORMS": "OFF",
-                "FLTK_BUILD_GL": "OFF"
+                "FLTK_BUILD_GL": "OFF",
+                "PEWTER_CXX_FLAGS": "-Wall -Wextra"
             }
         }
     ]

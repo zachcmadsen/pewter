@@ -27,6 +27,11 @@ set_target_properties(pewter PROPERTIES CXX_STANDARD 20)
 set_target_properties(pewter PROPERTIES CXX_STANDARD_REQUIRED ON)
 set_target_properties(pewter PROPERTIES CXX_EXTENSIONS OFF)
 
+if (PEWTER_CXX_FLAGS)
+    separate_arguments(PEWTER_CXX_FLAGS_LIST NATIVE_COMMAND ${PEWTER_CXX_FLAGS})
+    target_compile_options(pewter PRIVATE ${PEWTER_CXX_FLAGS_LIST})
+endif()
+
 target_sources(pewter PRIVATE main.cpp app.cpp)
 
 target_include_directories(pewter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
