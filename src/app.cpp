@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 #include <span>
 #include <string>
 #include <sys/stat.h>
@@ -136,6 +137,51 @@ struct Message {
     Save save;
 };
 
+std::optional<std::vector<uint8_t>> read_file(const char *filename) {
+    long file_size;
+    std::optional<std::vector<uint8_t>> bytes = {};
+    std::size_t bytes_read;
+
+    log("opening file '{}'", filename);
+    FILE *fp = fl_fopen(filename, "rb");
+    if (!fp) {
+        log("could not open file '{}'", filename);
+        goto cleanup;
+    }
+
+    if (std::fseek(fp, 0, SEEK_END) != 0) {
+        log("fseek failed");
+        goto cleanup;
+    }
+
+    file_size = std::ftell(fp);
+    if (file_size == -1) {
+        log("ftell failed");
+        goto cleanup;
+    }
+
+    if (std::fseek(fp, 0, SEEK_SET) != 0) {
+        log("fseek failed");
+        goto cleanup;
+    }
+
+    // TODO: If file_size is greater than the size of a save, truncate it?
+    bytes = std::vector<uint8_t>(file_size);
+    bytes_read = std::fread((*bytes).data(), sizeof(uint8_t), file_size, fp);
+    if (bytes_read != static_cast<std::size_t>(file_size)) {
+        log("failed to read file");
+        bytes = {};
+    }
+
+// TODO: Could I use unique_ptr to close the file and avoid the goto?
+cleanup:
+    if (fp) {
+        std::fclose(fp);
+    }
+
+    return bytes;
+}
+
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
     menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
     // The ampersand in front of the text makes the first letter a hotkey.
@@ -221,35 +267,12 @@ void App::open_file_callback(Fl_Widget *, void *data) {
 
     std::thread thread(
         [](std::string filename, void *x) {
-            log("parsing file '{}'", filename);
-
-            struct stat stat;
-            if (fl_stat(filename.c_str(), &stat)) {
-                log("fl_state failed");
+            auto save = read_file(filename.c_str());
+            if (!save) {
                 return;
             }
 
-            if (stat.st_size < 131072) {
-                log("invalid sav file size: {}", stat.st_size);
-                return;
-            }
-
-            FILE *fp = fl_fopen(filename.c_str(), "rb");
-            if (!fp) {
-                log("could not open file '{}'", filename);
-                return;
-            }
-
-            // TODO: Don't read in more than the save size.
-            std::vector<uint8_t> save(stat.st_size);
-            auto read = fread(save.data(), sizeof(uint8_t), stat.st_size, fp);
-            fclose(fp);
-            if (read != static_cast<size_t>(stat.st_size)) {
-                log("failed to read file '{}'", filename);
-                return;
-            }
-
-            auto block = std::span<uint8_t, 57344>(save.data(), 57344);
+            auto block = std::span<uint8_t, 57344>((*save).data(), 57344);
             validate_block(block);
 
             Message *message = new Message();
