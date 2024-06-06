@@ -25,8 +25,6 @@ class App final : public Fl_Double_Window {
   public:
     App();
 
-    void show_save(Save save);
-
   private:
     // TODO: Use Fl_Sys_Menu_Bar to get the native menu bar on macOS.
     Fl_Menu_Bar *menu_bar;
@@ -35,8 +33,8 @@ class App final : public Fl_Double_Window {
     Fl_Round_Button *boy_radio_button;
     Fl_Round_Button *girl_radio_button;
 
-    // TODO: Make this a function in app.cpp.
-    static void open_file_callback(Fl_Widget *w, void *app);
+    static void open_file_callback(Fl_Widget *w, void *data);
+    static void show_save_callback(void *data);
 };
 
 }

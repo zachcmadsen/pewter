@@ -136,62 +136,6 @@ struct Message {
     Save save;
 };
 
-void show_save_callback(void *data) {
-    Message *message = static_cast<Message *>(data);
-    message->app->show_save(message->save);
-    delete message;
-}
-
-/// Parses a save file and updates the GUI thread with the results.
-void parse_save(void *app, std::string filename) {
-    log("parsing file '{}'", filename);
-
-    struct stat stat;
-    if (fl_stat(filename.c_str(), &stat)) {
-        log("fl_state failed");
-        return;
-    }
-
-    if (stat.st_size < 131072) {
-        log("invalid sav file size: {}", stat.st_size);
-        return;
-    }
-
-    FILE *fp = fl_fopen(filename.c_str(), "rb");
-    if (!fp) {
-        log("could not open file '{}'", filename);
-        return;
-    }
-
-    // TODO: Don't read in more than the save size.
-    std::vector<uint8_t> save(stat.st_size);
-    auto read = fread(save.data(), sizeof(uint8_t), stat.st_size, fp);
-    fclose(fp);
-    if (read != static_cast<size_t>(stat.st_size)) {
-        log("failed to read file '{}'", filename);
-        return;
-    }
-
-    auto block = std::span<uint8_t, 57344>(save.data(), 57344);
-    validate_block(block);
-
-    Message *message = new Message();
-    message->app = static_cast<App *>(app);
-
-    for (size_t i = 0; i < sections; ++i) {
-        auto section = block.subspan(i * section_size).first<section_size>();
-        auto section_id = read_section_id(section);
-
-        switch (section_id) {
-        case 0: // trainer info
-            message->save.gender = read_gender(section);
-            break;
-        };
-    }
-
-    Fl::awake(show_save_callback, static_cast<void *>(message));
-}
-
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
     menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
     // The ampersand in front of the text makes the first letter a hotkey.
@@ -241,22 +185,7 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     end();
 }
 
-void App::show_save(Save save) {
-    player_name_input->value("ZACH");
-    switch (save.gender) {
-    case Gender::Boy:
-        boy_radio_button->setonly();
-        break;
-    case Gender::Girl:
-        girl_radio_button->setonly();
-        break;
-    case Gender::None:
-        break;
-    }
-    player_container->show();
-}
-
-void App::open_file_callback(Fl_Widget *, void *app) {
+void App::open_file_callback(Fl_Widget *, void *data) {
     // TODO: Show a confirmation prompt if there's already a save loaded.
     Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_FILE);
     file_chooser.filter("*.sav");
@@ -280,12 +209,93 @@ void App::open_file_callback(Fl_Widget *, void *app) {
         return;
     }
 
-    // TODO: Protect against opening multiple files at once, i.e., multiple
-    // background threads. We could use a different model where one background
-    // thread is created at startup. We send messages back and forth. That
-    // might make the problem easier.
-    std::thread thread(parse_save, app, std::string(filename));
+    // Prevent the user from opening another file while the current one is
+    // processed.
+    App *app = static_cast<App *>(data);
+    // TODO: Is it safe to cast away const here? The FLTK docs do...
+    Fl_Menu_Item *item = const_cast<Fl_Menu_Item *>(
+        app->menu_bar->find_item(open_file_callback));
+    if (item) {
+        item->deactivate();
+    }
+
+    std::thread thread(
+        [](std::string filename, void *x) {
+            log("parsing file '{}'", filename);
+
+            struct stat stat;
+            if (fl_stat(filename.c_str(), &stat)) {
+                log("fl_state failed");
+                return;
+            }
+
+            if (stat.st_size < 131072) {
+                log("invalid sav file size: {}", stat.st_size);
+                return;
+            }
+
+            FILE *fp = fl_fopen(filename.c_str(), "rb");
+            if (!fp) {
+                log("could not open file '{}'", filename);
+                return;
+            }
+
+            // TODO: Don't read in more than the save size.
+            std::vector<uint8_t> save(stat.st_size);
+            auto read = fread(save.data(), sizeof(uint8_t), stat.st_size, fp);
+            fclose(fp);
+            if (read != static_cast<size_t>(stat.st_size)) {
+                log("failed to read file '{}'", filename);
+                return;
+            }
+
+            auto block = std::span<uint8_t, 57344>(save.data(), 57344);
+            validate_block(block);
+
+            Message *message = new Message();
+            message->app = static_cast<App *>(x);
+
+            for (size_t i = 0; i < sections; ++i) {
+                auto section =
+                    block.subspan(i * section_size).first<section_size>();
+                auto section_id = read_section_id(section);
+
+                switch (section_id) {
+                case 0: // trainer info
+                    message->save.gender = read_gender(section);
+                    break;
+                };
+            }
+
+            Fl::awake(show_save_callback, static_cast<void *>(message));
+        },
+        std::string(filename), data);
     thread.detach();
+}
+
+void App::show_save_callback(void *data) {
+    auto message = static_cast<Message *>(data);
+    auto app = message->app;
+    app->player_name_input->value("ZACH");
+    switch (message->save.gender) {
+    case Gender::Boy:
+        app->boy_radio_button->setonly();
+        break;
+    case Gender::Girl:
+        app->girl_radio_button->setonly();
+        break;
+    case Gender::None:
+        break;
+    }
+    app->player_container->show();
+
+    Fl_Menu_Item *item = const_cast<Fl_Menu_Item *>(
+        app->menu_bar->find_item(open_file_callback));
+    if (item) {
+        item->activate();
+    }
+
+    delete message;
 }
 
 }
