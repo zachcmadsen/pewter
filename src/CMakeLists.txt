@@ -32,7 +32,7 @@ if (PEWTER_CXX_FLAGS)
     target_compile_options(pewter PRIVATE ${PEWTER_CXX_FLAGS_LIST})
 endif()
 
-target_sources(pewter PRIVATE main.cpp app.cpp)
+target_sources(pewter PRIVATE main.cpp app.cpp util.cpp)
 
 target_include_directories(pewter PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
