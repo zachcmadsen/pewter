@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <memory>
 #include <optional>
 #include <span>
 #include <string>
@@ -138,45 +139,37 @@ struct Message {
 };
 
 std::optional<std::vector<uint8_t>> read_file(const char *filename) {
-    long file_size;
-    std::optional<std::vector<uint8_t>> bytes = {};
-    std::size_t bytes_read;
-
     log("opening file '{}'", filename);
-    FILE *fp = fl_fopen(filename, "rb");
+    std::unique_ptr<FILE, decltype(std::fclose) *> fp(fl_fopen(filename, "rb"),
+                                                      std::fclose);
     if (!fp) {
         log("could not open file '{}'", filename);
-        goto cleanup;
+        return {};
     }
 
-    if (std::fseek(fp, 0, SEEK_END) != 0) {
+    if (std::fseek(fp.get(), 0, SEEK_END) != 0) {
         log("fseek failed");
-        goto cleanup;
+        return {};
     }
 
-    file_size = std::ftell(fp);
+    long file_size = std::ftell(fp.get());
     if (file_size == -1) {
         log("ftell failed");
-        goto cleanup;
+        return {};
     }
 
-    if (std::fseek(fp, 0, SEEK_SET) != 0) {
+    if (std::fseek(fp.get(), 0, SEEK_SET) != 0) {
         log("fseek failed");
-        goto cleanup;
+        return {};
     }
 
     // TODO: If file_size is greater than the size of a save, truncate it?
-    bytes = std::vector<uint8_t>(file_size);
-    bytes_read = std::fread((*bytes).data(), sizeof(uint8_t), file_size, fp);
+    std::vector<uint8_t> bytes(file_size);
+    std::size_t bytes_read =
+        std::fread(bytes.data(), sizeof(uint8_t), file_size, fp.get());
     if (bytes_read != static_cast<std::size_t>(file_size)) {
         log("failed to read file");
-        bytes = {};
-    }
-
-// TODO: Could I use unique_ptr to close the file and avoid the goto?
-cleanup:
-    if (fp) {
-        std::fclose(fp);
+        return {};
     }
 
     return bytes;
