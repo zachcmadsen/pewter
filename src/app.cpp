@@ -1,3 +1,5 @@
+#include "app.hpp"
+
 #include <optional>
 #include <span>
 #include <string>
@@ -19,7 +21,6 @@
 #include <FL/platform_types.h>
 #include <fmt/format.h>
 
-#include "app.hpp"
 #include "log.hpp"
 #include "save.hpp"
 #include "util.hpp"

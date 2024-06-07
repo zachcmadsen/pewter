@@ -1,3 +1,5 @@
+#include "util.hpp"
+
 #include <cstdint>
 #include <fstream>
 #include <ios>
@@ -5,8 +7,6 @@
 #include <optional>
 #include <string_view>
 #include <vector>
-
-#include "util.hpp"
 
 namespace pewter {
 
