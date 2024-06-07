@@ -124,6 +124,8 @@ std::optional<Save> parseSave(std::span<const std::uint8_t> bytes) {
         case TrainerInfoSectionId:
             save.gender = readGender(section);
             break;
+        default:
+            break;
         };
     }
 

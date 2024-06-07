@@ -3,10 +3,10 @@
 #include "app.hpp"
 
 int main() {
-    pewter::App *app = new pewter::App();
-    app->show();
-
     Fl::lock();
+
+    pewter::App app;
+    app.show();
 
     return Fl::run();
 }

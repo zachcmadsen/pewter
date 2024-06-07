@@ -17,8 +17,6 @@
 #include <FL/Fl_Native_File_Chooser.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/fl_ask.H>
-#include <FL/fl_utf8.h>
-#include <FL/platform_types.h>
 #include <fmt/format.h>
 
 #include "log.hpp"
@@ -46,30 +44,30 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     playerContainer->gap(5);
     playerContainer->margin(5);
 
-    auto *player_name_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
-    playerContainer->fixed(player_name_row, 30);
+    auto *playerNameRow = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    playerContainer->fixed(playerNameRow, 30);
 
-    auto *player_name_label = new Fl_Box(0, 0, 0, 0, "Name:");
-    player_name_label->align(FL_ALIGN_INSIDE);
+    auto *playerNameLabel = new Fl_Box(0, 0, 0, 0, "Name:");
+    playerNameLabel->align(FL_ALIGN_INSIDE);
 
     playerNameInput = new Fl_Input(0, 0, 0, 0);
     playerNameInput->value("");
     playerNameInput->maximum_size(7);
 
-    player_name_row->end();
+    playerNameRow->end();
 
-    auto *player_gender_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
-    playerContainer->fixed(player_gender_row, 30);
+    auto *playerGenderRow = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    playerContainer->fixed(playerGenderRow, 30);
 
-    auto *player_gender_label = new Fl_Box(0, 0, 0, 0, "Gender:");
-    player_gender_label->align(FL_ALIGN_INSIDE);
+    auto *playerGenderLabel = new Fl_Box(0, 0, 0, 0, "Gender:");
+    playerGenderLabel->align(FL_ALIGN_INSIDE);
 
     boyButton = new Fl_Round_Button(0, 0, 0, 0, "Boy");
     boyButton->type(FL_RADIO_BUTTON);
     girlButton = new Fl_Round_Button(0, 0, 0, 0, "Girl");
     girlButton->type(FL_RADIO_BUTTON);
 
-    player_gender_row->end();
+    playerGenderRow->end();
 
     playerContainer->end();
 
@@ -78,7 +76,7 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     end();
 }
 
-void App::openFileCallback(Fl_Widget *, void *data) {
+void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
     // TODO: Show a confirmation prompt if there's already a save loaded.
     Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
     fileChooser.filter("*.sav");
@@ -106,7 +104,7 @@ void App::openFileCallback(Fl_Widget *, void *data) {
     // another file while the current one is processed.
     auto *app = static_cast<App *>(data);
     // TODO: Is it safe to cast away const here? The FLTK docs do...
-    Fl_Menu_Item *item =
+    auto *item =
         const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
     if (item) {
         item->deactivate();
@@ -143,8 +141,8 @@ void App::openFileCallback(Fl_Widget *, void *data) {
 }
 
 void App::show_save_callback(void *data) {
-    auto message = static_cast<Message *>(data);
-    auto app = message->app;
+    auto *message = static_cast<Message *>(data);
+    auto *app = message->app;
     app->playerNameInput->value("ZACH");
     switch (message->save.gender) {
     case Gender::Boy:
@@ -158,7 +156,7 @@ void App::show_save_callback(void *data) {
     }
     app->playerContainer->show();
 
-    Fl_Menu_Item *item =
+    auto *item =
         const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
     if (item) {
         item->activate();
@@ -168,7 +166,7 @@ void App::show_save_callback(void *data) {
 }
 
 void App::show_alert_callback(void *data) {
-    auto message = static_cast<AlertMessage *>(data);
+    auto *message = static_cast<AlertMessage *>(data);
     fl_alert("%s", message->message.c_str());
     delete message;
 }
