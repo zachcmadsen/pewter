@@ -1,7 +1,6 @@
 #include <optional>
 #include <span>
 #include <string>
-#include <sys/stat.h>
 #include <thread>
 
 #include <FL/Enumerations.H>
