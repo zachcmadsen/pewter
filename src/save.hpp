@@ -7,15 +7,16 @@
 namespace pewter {
 
 enum class Gender {
-    None,
     Boy,
     Girl,
+    None,
 };
 
 struct Save {
     Gender gender;
 };
 
+/// Parses game save information from `bytes`.
 std::optional<Save> parseSave(std::span<const std::uint8_t> bytes);
 
 }

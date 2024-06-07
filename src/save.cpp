@@ -15,9 +15,8 @@ namespace pewter {
 inline constexpr std::size_t BlockSize = 57344;
 /// The size of a section in bytes.
 inline constexpr std::size_t SectionSize = 4096;
-
 /// The number of sections in a block.
-inline constexpr std::size_t sections = 14;
+inline constexpr std::size_t Sections = 14;
 
 inline constexpr std::uint16_t TrainerInfoSectionId = 0;
 
@@ -27,7 +26,7 @@ inline constexpr std::size_t SaveIndexOffset = 0x0FFC;
 
 inline constexpr std::size_t PlayerGenderOffset = 0x0008;
 
-inline constexpr std::array<std::uint16_t, sections> ChecksumBytes{
+inline constexpr std::array<std::size_t, Sections> ChecksumBytes{
     3884, 3968, 3968, 3968, 3948, 3968, 3968,
     3968, 3968, 3968, 3968, 3968, 3968, 2000};
 
@@ -59,30 +58,33 @@ computeChecksum(std::span<const std::uint8_t, SectionSize> section) {
            static_cast<std::uint16_t>(checksum >> 16);
 }
 
-void validateBlock(std::span<const std::uint8_t, BlockSize> block) {
+bool validateBlock(std::span<const std::uint8_t, BlockSize> block) {
     auto firstSection = block.first<SectionSize>();
     auto firstSaveIndex = readSaveIndex(firstSection);
 
     // TODO: Validate the section signature and that each section appears only
     // once. I could also validate that the sections are in order, but that's
     // probably not necessary.
-    for (size_t i = 0; i < sections; ++i) {
-        auto section = block.subspan(i * SectionSize).first<SectionSize>();
+    for (std::size_t offset = 0; offset < BlockSize; offset += SectionSize) {
+        auto section = block.subspan(offset).first<SectionSize>();
 
-        auto checksum = computeChecksum(section);
-        auto actual_checksum = readChecksum(section);
-        if (actual_checksum != checksum) {
-            log("checksum mismatch for section: {} != {}", actual_checksum,
-                checksum);
+        auto actualChecksum = computeChecksum(section);
+        auto expectedChecksum = readChecksum(section);
+        if (actualChecksum != expectedChecksum) {
+            log("invalid checksum for section {}: {} != {}",
+                readSectionId(section), actualChecksum, expectedChecksum);
+            return false;
         }
 
-        auto save_index = readSaveIndex(section);
-        if (save_index != firstSaveIndex) {
-            log("save index mismatch: {} != {}", firstSaveIndex, save_index);
+        auto saveIndex = readSaveIndex(section);
+        if (saveIndex != firstSaveIndex) {
+            log("invalid save index for section {}: {} != {}",
+                readSectionId(section), saveIndex, firstSaveIndex);
+            return false;
         }
     }
 
-    log("block is valid");
+    return true;
 }
 
 Gender readGender(std::span<const std::uint8_t, SectionSize> section) {
@@ -109,7 +111,9 @@ std::optional<Save> parseSave(std::span<const std::uint8_t> bytes) {
     }
 
     auto block = bytes.first<BlockSize>();
-    validateBlock(block);
+    if (!validateBlock(block)) {
+        return {};
+    }
 
     Save save;
     for (std::size_t offset = 0; offset < BlockSize; offset += SectionSize) {
