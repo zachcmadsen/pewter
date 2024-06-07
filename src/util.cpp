@@ -10,7 +10,7 @@
 
 namespace pewter {
 
-std::optional<std::vector<uint8_t>> read_file(std::string_view filename) {
+std::optional<std::vector<std::uint8_t>> read_file(std::string_view filename) {
     std::ifstream ifs(filename.data(), std::ios::binary);
     if (!ifs.is_open()) {
         return {};
