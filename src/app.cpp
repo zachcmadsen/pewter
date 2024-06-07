@@ -145,55 +145,55 @@ struct AlertMessage {
 };
 
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
-    menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
+    menuBar = new Fl_Menu_Bar(0, 0, 340, 30);
     // The ampersand in front of the text makes the first letter a hotkey.
-    menu_bar->add("&File/&Open...", FL_CTRL + 'o', open_file_callback, this);
+    menuBar->add("&File/&Open...", FL_CTRL + 'o', openFileCallback, this);
 
-    player_container = new Fl_Flex(0, 30, 340, 150, Fl_Flex::VERTICAL);
-    player_container->gap(5);
-    player_container->margin(5);
+    playerContainer = new Fl_Flex(0, 30, 340, 150, Fl_Flex::VERTICAL);
+    playerContainer->gap(5);
+    playerContainer->margin(5);
 
-    Fl_Flex *player_name_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
-    player_container->fixed(player_name_row, 30);
+    auto *player_name_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    playerContainer->fixed(player_name_row, 30);
 
-    Fl_Box *player_name_label = new Fl_Box(0, 0, 0, 0, "Name:");
+    auto *player_name_label = new Fl_Box(0, 0, 0, 0, "Name:");
     player_name_label->align(FL_ALIGN_INSIDE);
 
-    player_name_input = new Fl_Input(0, 0, 0, 0);
-    player_name_input->value("");
-    player_name_input->maximum_size(7);
+    playerNameInput = new Fl_Input(0, 0, 0, 0);
+    playerNameInput->value("");
+    playerNameInput->maximum_size(7);
 
     player_name_row->end();
 
-    Fl_Flex *player_gender_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
-    player_container->fixed(player_gender_row, 30);
+    auto *player_gender_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    playerContainer->fixed(player_gender_row, 30);
 
-    Fl_Box *player_gender_label = new Fl_Box(0, 0, 0, 0, "Gender:");
+    auto *player_gender_label = new Fl_Box(0, 0, 0, 0, "Gender:");
     player_gender_label->align(FL_ALIGN_INSIDE);
 
-    boy_radio_button = new Fl_Round_Button(0, 0, 0, 0, "Boy");
-    boy_radio_button->type(FL_RADIO_BUTTON);
-    girl_radio_button = new Fl_Round_Button(0, 0, 0, 0, "Girl");
-    girl_radio_button->type(FL_RADIO_BUTTON);
+    boyButton = new Fl_Round_Button(0, 0, 0, 0, "Boy");
+    boyButton->type(FL_RADIO_BUTTON);
+    girlButton = new Fl_Round_Button(0, 0, 0, 0, "Girl");
+    girlButton->type(FL_RADIO_BUTTON);
 
     player_gender_row->end();
 
-    player_container->end();
+    playerContainer->end();
 
-    player_container->hide();
+    playerContainer->hide();
 
     end();
 }
 
-void App::open_file_callback(Fl_Widget *, void *data) {
+void App::openFileCallback(Fl_Widget *, void *data) {
     // TODO: Show a confirmation prompt if there's already a save loaded.
-    Fl_Native_File_Chooser file_chooser(Fl_Native_File_Chooser::BROWSE_FILE);
-    file_chooser.filter("*.sav");
-    if (int rc = file_chooser.show()) {
+    Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
+    fileChooser.filter("*.sav");
+    if (auto rc = fileChooser.show()) {
         switch (rc) {
         case -1:
             fl_alert("An error occurred while trying to open a file.");
-            log("failed to choose a file: {}", file_chooser.errmsg());
+            log("failed to choose a file: {}", fileChooser.errmsg());
             break;
         case 1:
             return;
@@ -203,18 +203,18 @@ void App::open_file_callback(Fl_Widget *, void *data) {
         }
     }
 
-    const char *filename = file_chooser.filename();
+    const auto *filename = fileChooser.filename();
     if (!filename) {
         log("unexpected NULL filename");
         return;
     }
 
-    // Prevent the user from opening another file while the current one is
-    // processed.
-    App *app = static_cast<App *>(data);
+    // Deactive the open file menu item to prevent the user from opening
+    // another file while the current one is processed.
+    auto *app = static_cast<App *>(data);
     // TODO: Is it safe to cast away const here? The FLTK docs do...
-    Fl_Menu_Item *item = const_cast<Fl_Menu_Item *>(
-        app->menu_bar->find_item(open_file_callback));
+    Fl_Menu_Item *item =
+        const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
     if (item) {
         item->deactivate();
     }
@@ -222,7 +222,7 @@ void App::open_file_callback(Fl_Widget *, void *data) {
     std::thread thread(
         [](std::string filename, void *data) {
             log("opening file '{}'", filename);
-            auto save = read_file(filename);
+            auto save = readFile(filename);
             if (!save) {
                 log("could not open file '{}'", filename);
 
@@ -238,7 +238,7 @@ void App::open_file_callback(Fl_Widget *, void *data) {
             auto block = std::span<uint8_t, 57344>((*save).data(), 57344);
             validate_block(block);
 
-            Message *message = new Message();
+            auto *message = new Message();
             message->app = static_cast<App *>(data);
 
             for (size_t i = 0; i < sections; ++i) {
@@ -262,21 +262,21 @@ void App::open_file_callback(Fl_Widget *, void *data) {
 void App::show_save_callback(void *data) {
     auto message = static_cast<Message *>(data);
     auto app = message->app;
-    app->player_name_input->value("ZACH");
+    app->playerNameInput->value("ZACH");
     switch (message->save.gender) {
     case Gender::Boy:
-        app->boy_radio_button->setonly();
+        app->boyButton->setonly();
         break;
     case Gender::Girl:
-        app->girl_radio_button->setonly();
+        app->girlButton->setonly();
         break;
     case Gender::None:
         break;
     }
-    app->player_container->show();
+    app->playerContainer->show();
 
-    Fl_Menu_Item *item = const_cast<Fl_Menu_Item *>(
-        app->menu_bar->find_item(open_file_callback));
+    Fl_Menu_Item *item =
+        const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
     if (item) {
         item->activate();
     }
