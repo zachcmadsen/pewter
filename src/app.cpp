@@ -36,37 +36,22 @@ inline constexpr size_t section_size = 4096;
 /// The number of sections in a block.
 inline constexpr size_t sections = 14;
 
-/// Reads a 8-bit unsigned integer from `bytes`.
-uint16_t read_u8(std::span<const uint8_t, 1> bytes) {
-    return bytes[0];
-}
-
-/// Reads a 16-bit unsigned integer from `bytes`.
-uint16_t read_u16(std::span<const uint8_t, 2> bytes) {
-    return bytes[0] | bytes[1] << 8;
-}
-
-/// Reads a 32-bit unsigned integer from `bytes`.
-uint32_t read_u32(std::span<const uint8_t, 4> bytes) {
-    return bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24;
-}
-
 /// Reads the section ID from `section`.
 uint16_t read_section_id(std::span<const uint8_t, section_size> section) {
     constexpr size_t section_id_offset = 0x0FF4;
-    return read_u16(section.subspan<section_id_offset, 2>());
+    return readU16(section.subspan<section_id_offset, 2>());
 }
 
 /// Reads the section checksum from `section`.
 uint16_t read_checksum(std::span<const uint8_t, section_size> section) {
     constexpr size_t checksum_offset = 0x0FF6;
-    return read_u16(section.subspan<checksum_offset, 2>());
+    return readU16(section.subspan<checksum_offset, 2>());
 }
 
 /// Reads the save index from `section`.
 uint32_t read_save_index(std::span<const uint8_t, section_size> section) {
     constexpr size_t save_index_offset = 0x0FFC;
-    return read_u32(section.subspan<save_index_offset, 4>());
+    return readU32(section.subspan<save_index_offset, 4>());
 }
 
 /// Computes the checksum of a section.
@@ -80,7 +65,7 @@ compute_section_checksum(std::span<const uint8_t, section_size> section) {
     auto bytes = checksum_bytes_per_section[section_id];
     uint32_t checksum = 0;
     for (int i = 0; i < bytes; i += 4) {
-        checksum += read_u32(section.subspan(i).first<4>());
+        checksum += readU32(section.subspan(i).first<4>());
     }
 
     return static_cast<uint16_t>(checksum) +
