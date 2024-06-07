@@ -23,6 +23,7 @@
 #include <FL/fl_ask.H>
 #include <FL/fl_utf8.h>
 #include <FL/platform_types.h>
+#include <fmt/format.h>
 
 #include "app.hpp"
 #include "log.hpp"
@@ -138,6 +139,11 @@ struct Message {
     Save save;
 };
 
+struct AlertMessage {
+    App *app;
+    std::string message;
+};
+
 App::App() : Fl_Double_Window(340, 180, "Pewter") {
     menu_bar = new Fl_Menu_Bar(0, 0, 340, 30);
     // The ampersand in front of the text makes the first letter a hotkey.
@@ -222,9 +228,18 @@ void App::open_file_callback(Fl_Widget *, void *data) {
     }
 
     std::thread thread(
-        [](std::string filename, void *x) {
+        [](std::string filename, void *data) {
+            log("opening file '{}'", filename);
             auto save = read_file(filename);
             if (!save) {
+                log("could not open file '{}'", filename);
+
+                auto message = new AlertMessage();
+                message->app = static_cast<App *>(data);
+                message->message =
+                    fmt::format("Could not open file '{}'.", filename);
+                Fl::awake(show_alert_callback, static_cast<void *>(message));
+
                 return;
             }
 
@@ -232,7 +247,7 @@ void App::open_file_callback(Fl_Widget *, void *data) {
             validate_block(block);
 
             Message *message = new Message();
-            message->app = static_cast<App *>(x);
+            message->app = static_cast<App *>(data);
 
             for (size_t i = 0; i < sections; ++i) {
                 auto section =
@@ -274,6 +289,12 @@ void App::show_save_callback(void *data) {
         item->activate();
     }
 
+    delete message;
+}
+
+void App::show_alert_callback(void *data) {
+    auto message = static_cast<AlertMessage *>(data);
+    fl_alert("%s", message->message.c_str());
     delete message;
 }
 

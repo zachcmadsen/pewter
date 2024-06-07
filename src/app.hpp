@@ -34,6 +34,7 @@ class App final : public Fl_Double_Window {
     Fl_Round_Button *girl_radio_button;
 
     static void open_file_callback(Fl_Widget *w, void *data);
+    static void show_alert_callback(void *data);
     static void show_save_callback(void *data);
 };
 
