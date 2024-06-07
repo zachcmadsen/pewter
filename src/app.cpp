@@ -1,13 +1,8 @@
-#include <array>
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
 #include <optional>
 #include <span>
 #include <string>
 #include <sys/stat.h>
 #include <thread>
-#include <vector>
 
 #include <FL/Enumerations.H>
 #include <FL/Fl.H>
@@ -27,97 +22,10 @@
 
 #include "app.hpp"
 #include "log.hpp"
+#include "save.hpp"
 #include "util.hpp"
 
 namespace pewter {
-
-/// The size of a section in bytes.
-inline constexpr size_t section_size = 4096;
-/// The number of sections in a block.
-inline constexpr size_t sections = 14;
-
-/// Reads the section ID from `section`.
-uint16_t read_section_id(std::span<const uint8_t, section_size> section) {
-    constexpr size_t section_id_offset = 0x0FF4;
-    return readU16(section.subspan<section_id_offset, 2>());
-}
-
-/// Reads the section checksum from `section`.
-uint16_t read_checksum(std::span<const uint8_t, section_size> section) {
-    constexpr size_t checksum_offset = 0x0FF6;
-    return readU16(section.subspan<checksum_offset, 2>());
-}
-
-/// Reads the save index from `section`.
-uint32_t read_save_index(std::span<const uint8_t, section_size> section) {
-    constexpr size_t save_index_offset = 0x0FFC;
-    return readU32(section.subspan<save_index_offset, 4>());
-}
-
-/// Computes the checksum of a section.
-uint16_t
-compute_section_checksum(std::span<const uint8_t, section_size> section) {
-    constexpr std::array<uint16_t, sections> checksum_bytes_per_section{
-        3884, 3968, 3968, 3968, 3948, 3968, 3968,
-        3968, 3968, 3968, 3968, 3968, 3968, 2000};
-
-    auto section_id = read_section_id(section);
-    auto bytes = checksum_bytes_per_section[section_id];
-    uint32_t checksum = 0;
-    for (int i = 0; i < bytes; i += 4) {
-        checksum += readU32(section.subspan(i).first<4>());
-    }
-
-    return static_cast<uint16_t>(checksum) +
-           static_cast<uint16_t>(checksum >> 16);
-}
-
-/// Validates a game save `block`.
-void validate_block(std::span<const uint8_t, 57344> block) {
-    auto first_section = block.first<section_size>();
-    auto first_save_index = read_save_index(first_section);
-
-    // TODO: Validate the section signature and that each section appears only
-    // once. I could also validate that the sections are in order, but that's
-    // probably not necessary.
-    for (size_t i = 0; i < sections; ++i) {
-        auto section = block.subspan(i * section_size).first<section_size>();
-
-        auto checksum = compute_section_checksum(section);
-        auto actual_checksum = read_checksum(section);
-        if (actual_checksum != checksum) {
-            log("checksum mismatch for section: {} != {}", actual_checksum,
-                checksum);
-        }
-
-        auto save_index = read_save_index(section);
-        if (save_index != first_save_index) {
-            log("save index mismatch: {} != {}", first_save_index, save_index);
-        }
-    }
-
-    log("block is valid");
-}
-
-Gender read_gender(std::span<const uint8_t, section_size> section) {
-    constexpr size_t gender_offset = 0x0008;
-
-    Gender gender;
-    switch (section[gender_offset]) {
-    case 0x00:
-        gender = Gender::Boy;
-        break;
-    case 0x01:
-        gender = Gender::Girl;
-        break;
-    default:
-        log("invalid player gender: {}", section[gender_offset]);
-        gender = Gender::None;
-        break;
-    }
-
-    return gender;
-}
 
 struct Message {
     App *app;
@@ -207,11 +115,11 @@ void App::openFileCallback(Fl_Widget *, void *data) {
     std::thread thread(
         [](std::string filename, void *data) {
             log("opening file '{}'", filename);
-            auto save = readFile(filename);
-            if (!save) {
+            auto bytes = readFile(filename);
+            if (!bytes) {
                 log("could not open file '{}'", filename);
 
-                auto message = new AlertMessage();
+                auto *message = new AlertMessage();
                 message->app = static_cast<App *>(data);
                 message->message =
                     fmt::format("Could not open file '{}'.", filename);
@@ -220,24 +128,14 @@ void App::openFileCallback(Fl_Widget *, void *data) {
                 return;
             }
 
-            auto block = std::span<uint8_t, 57344>((*save).data(), 57344);
-            validate_block(block);
+            auto save = parseSave(*bytes);
+            if (!save) {
+                return;
+            }
 
             auto *message = new Message();
             message->app = static_cast<App *>(data);
-
-            for (size_t i = 0; i < sections; ++i) {
-                auto section =
-                    block.subspan(i * section_size).first<section_size>();
-                auto section_id = read_section_id(section);
-
-                switch (section_id) {
-                case 0: // trainer info
-                    message->save.gender = read_gender(section);
-                    break;
-                };
-            }
-
+            message->save = *save;
             Fl::awake(show_save_callback, static_cast<void *>(message));
         },
         std::string(filename), data);

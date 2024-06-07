@@ -9,18 +9,6 @@
 
 namespace pewter {
 
-enum class Gender {
-    None,
-    Boy,
-    Girl,
-};
-
-struct Save {
-    Gender gender;
-};
-
-// TODO: Child widgets get cleaned up by Fl_Double_Window's destructor. Check
-// if anything needs to be cleaned up manually.
 class App final : public Fl_Double_Window {
   public:
     App();
