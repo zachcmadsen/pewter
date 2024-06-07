@@ -223,7 +223,7 @@ void App::open_file_callback(Fl_Widget *, void *data) {
 
     std::thread thread(
         [](std::string filename, void *x) {
-            auto save = read_file(filename.c_str());
+            auto save = read_file(filename);
             if (!save) {
                 return;
             }
