@@ -31,24 +31,20 @@ inline constexpr std::array<std::uint16_t, sections> ChecksumBytes{
     3884, 3968, 3968, 3968, 3948, 3968, 3968,
     3968, 3968, 3968, 3968, 3968, 3968, 2000};
 
-/// Reads the section ID from `section`.
 std::uint16_t
 readSectionId(std::span<const std::uint8_t, SectionSize> section) {
     return readU16(section.subspan<SectionIdOffset, 2>());
 }
 
-/// Reads the section checksum from `section`.
 std::uint16_t readChecksum(std::span<const std::uint8_t, SectionSize> section) {
     return readU16(section.subspan<SectionChecksumOffset, 2>());
 }
 
-/// Reads the save index from `section`.
 std::uint32_t
 readSaveIndex(std::span<const std::uint8_t, SectionSize> section) {
     return readU32(section.subspan<SaveIndexOffset, 4>());
 }
 
-/// Computes the checksum of a section.
 std::uint16_t
 computeChecksum(std::span<const std::uint8_t, SectionSize> section) {
     auto sectionId = readSectionId(section);
@@ -62,7 +58,6 @@ computeChecksum(std::span<const std::uint8_t, SectionSize> section) {
            static_cast<std::uint16_t>(checksum >> 16);
 }
 
-/// Validates a game save `block`.
 void validateBlock(std::span<const std::uint8_t, BlockSize> block) {
     auto firstSection = block.first<SectionSize>();
     auto firstSaveIndex = readSaveIndex(firstSection);
