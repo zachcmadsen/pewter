@@ -150,45 +150,37 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     menu_bar->add("&File/&Open...", FL_CTRL + 'o', open_file_callback, this);
 
     player_container = new Fl_Flex(0, 30, 340, 150, Fl_Flex::VERTICAL);
+    player_container->gap(5);
     player_container->margin(5);
 
     Fl_Flex *player_name_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    player_container->fixed(player_name_row, 30);
 
-    // It doesn't matter what we put the size and position of the widgets
-    // since they'll be resized anyways.
     Fl_Box *player_name_label = new Fl_Box(0, 0, 0, 0, "Name:");
     player_name_label->align(FL_ALIGN_INSIDE);
-
-    // TODO: Investigate how measure_label works.
-    int w, h;
-    player_name_label->measure_label(w, h);
-    player_name_row->fixed(player_name_label, w + 5);
 
     player_name_input = new Fl_Input(0, 0, 0, 0);
     player_name_input->value("");
     player_name_input->maximum_size(7);
 
     player_name_row->end();
-    player_container->fixed(player_name_row, 30);
 
     Fl_Flex *player_gender_row = new Fl_Flex(Fl_Flex::HORIZONTAL);
+    player_container->fixed(player_gender_row, 30);
+
     Fl_Box *player_gender_label = new Fl_Box(0, 0, 0, 0, "Gender:");
     player_gender_label->align(FL_ALIGN_INSIDE);
-
-    player_gender_label->measure_label(w, h);
-    player_gender_row->fixed(player_gender_label, w + 5);
 
     boy_radio_button = new Fl_Round_Button(0, 0, 0, 0, "Boy");
     boy_radio_button->type(FL_RADIO_BUTTON);
     girl_radio_button = new Fl_Round_Button(0, 0, 0, 0, "Girl");
     girl_radio_button->type(FL_RADIO_BUTTON);
-    player_gender_row->end();
-    player_container->fixed(player_gender_row, 30);
 
-    player_container->gap(5);
+    player_gender_row->end();
+
+    player_container->end();
 
     player_container->hide();
-    player_container->end();
 
     end();
 }
