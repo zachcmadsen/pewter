@@ -49,9 +49,10 @@ std::uint16_t
 computeChecksum(std::span<const std::uint8_t, SectionSize> section) {
     auto sectionId = readSectionId(section);
     auto bytes = ChecksumBytes[sectionId];
+
     std::uint32_t checksum = 0;
-    for (int i = 0; i < bytes; i += 4) {
-        checksum += readU32(section.subspan(i).first<4>());
+    for (std::size_t offset = 0; offset < bytes; offset += 4) {
+        checksum += readU32(section.subspan(offset).first<4>());
     }
 
     return static_cast<std::uint16_t>(checksum) +
@@ -111,8 +112,8 @@ std::optional<Save> parseSave(std::span<const std::uint8_t> bytes) {
     validateBlock(block);
 
     Save save;
-    for (size_t i = 0; i < sections; ++i) {
-        auto section = block.subspan(i * SectionSize).first<SectionSize>();
+    for (std::size_t offset = 0; offset < BlockSize; offset += SectionSize) {
+        auto section = block.subspan(offset).first<SectionSize>();
         auto sectionId = readSectionId(section);
 
         switch (sectionId) {
