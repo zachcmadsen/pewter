@@ -3,6 +3,7 @@ include(FetchContent)
 FetchContent_Declare(
     FLTK
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/../fltk
+    SYSTEM
     # GIT_REPOSITORY https://github.com/fltk/fltk
     # GIT_TAG master
     # GIT_SHALLOW TRUE
