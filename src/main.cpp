@@ -2,7 +2,8 @@
 
 #include "app.hpp"
 
-int main() {
+int main()
+{
     Fl::lock();
 
     pewter::App app;

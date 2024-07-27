@@ -4,19 +4,22 @@
 #include <optional>
 #include <span>
 
-namespace pewter {
+namespace pewter
+{
 
-enum class Gender {
+enum class Gender
+{
     Boy,
     Girl,
     None,
 };
 
-struct Save {
+struct Save
+{
     Gender gender;
 };
 
 /// Parses game save information from `bytes`.
 std::optional<Save> parseSave(std::span<const std::uint8_t> bytes);
 
-}
+} // namespace pewter

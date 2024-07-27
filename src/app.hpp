@@ -7,9 +7,11 @@
 #include <FL/Fl_Round_Button.H>
 #include <FL/Fl_Widget.H>
 
-namespace pewter {
+namespace pewter
+{
 
-class App final : public Fl_Double_Window {
+class App final : public Fl_Double_Window
+{
   public:
     App();
 
@@ -27,4 +29,4 @@ class App final : public Fl_Double_Window {
     static void show_save_callback(void *data);
 };
 
-}
+} // namespace pewter

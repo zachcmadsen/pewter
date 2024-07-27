@@ -22,19 +22,23 @@
 #include "save.hpp"
 #include "util.hpp"
 
-namespace pewter {
+namespace pewter
+{
 
-struct Message {
+struct Message
+{
     App *app;
     Save save;
 };
 
-struct AlertMessage {
+struct AlertMessage
+{
     App *app;
     std::string message;
 };
 
-App::App() : Fl_Double_Window(340, 180, "Pewter") {
+App::App() : Fl_Double_Window(340, 180, "Pewter")
+{
     menuBar = new Fl_Menu_Bar(0, 0, 340, 30);
     // The ampersand in front of the text makes the first letter a hotkey.
     menuBar->add("&File/&Open...", FL_CTRL + 'o', openFileCallback, this);
@@ -75,12 +79,15 @@ App::App() : Fl_Double_Window(340, 180, "Pewter") {
     end();
 }
 
-void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
+void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data)
+{
     // TODO: Show a confirmation prompt if there's already a save loaded.
     Fl_Native_File_Chooser fileChooser(Fl_Native_File_Chooser::BROWSE_FILE);
     fileChooser.filter("*.sav");
-    if (auto rc = fileChooser.show()) {
-        switch (rc) {
+    if (auto rc = fileChooser.show())
+    {
+        switch (rc)
+        {
         case -1:
             fl_alert("An error occurred while trying to open a file.");
             log("failed to choose a file: {}", fileChooser.errmsg());
@@ -94,7 +101,8 @@ void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
     }
 
     const auto *filename = fileChooser.filename();
-    if (!filename) {
+    if (!filename)
+    {
         log("unexpected NULL filename");
         return;
     }
@@ -103,9 +111,9 @@ void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
     // another file while the current one is processed.
     auto *app = static_cast<App *>(data);
     // TODO: Is it safe to cast away const here? The FLTK docs do...
-    auto *item =
-        const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
-    if (item) {
+    auto *item = const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
+    if (item)
+    {
         item->deactivate();
     }
 
@@ -113,20 +121,21 @@ void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
         [](std::string filename, void *data) {
             log("opening file '{}'", filename);
             auto bytes = readFile(filename);
-            if (!bytes) {
+            if (!bytes)
+            {
                 log("could not open file '{}'", filename);
 
                 auto *message = new AlertMessage();
                 message->app = static_cast<App *>(data);
-                message->message =
-                    std::format("Could not open file '{}'.", filename);
+                message->message = std::format("Could not open file '{}'.", filename);
                 Fl::awake(show_alert_callback, static_cast<void *>(message));
 
                 return;
             }
 
             auto save = parseSave(*bytes);
-            if (!save) {
+            if (!save)
+            {
                 return;
             }
 
@@ -139,11 +148,13 @@ void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
     thread.detach();
 }
 
-void App::show_save_callback(void *data) {
+void App::show_save_callback(void *data)
+{
     auto *message = static_cast<Message *>(data);
     auto *app = message->app;
     app->playerNameInput->value("ZACH");
-    switch (message->save.gender) {
+    switch (message->save.gender)
+    {
     case Gender::Boy:
         app->boyButton->setonly();
         break;
@@ -155,19 +166,20 @@ void App::show_save_callback(void *data) {
     }
     app->playerContainer->show();
 
-    auto *item =
-        const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
-    if (item) {
+    auto *item = const_cast<Fl_Menu_Item *>(app->menuBar->find_item(openFileCallback));
+    if (item)
+    {
         item->activate();
     }
 
     delete message;
 }
 
-void App::show_alert_callback(void *data) {
+void App::show_alert_callback(void *data)
+{
     auto *message = static_cast<AlertMessage *>(data);
     fl_alert("%s", message->message.c_str());
     delete message;
 }
 
-}
+} // namespace pewter
