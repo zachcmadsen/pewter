@@ -17,7 +17,6 @@
 #include <FL/Fl_Native_File_Chooser.H>
 #include <FL/Fl_Round_Button.H>
 #include <FL/fl_ask.H>
-#include <fmt/format.h>
 
 #include "log.hpp"
 #include "save.hpp"
@@ -120,7 +119,7 @@ void App::openFileCallback([[maybe_unused]] Fl_Widget *w, void *data) {
                 auto *message = new AlertMessage();
                 message->app = static_cast<App *>(data);
                 message->message =
-                    fmt::format("Could not open file '{}'.", filename);
+                    std::format("Could not open file '{}'.", filename);
                 Fl::awake(show_alert_callback, static_cast<void *>(message));
 
                 return;
