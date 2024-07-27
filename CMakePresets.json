@@ -2,18 +2,24 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "dev",
+            "name": "windows-debug",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "FLTK_BUILD_FLTK_OPTIONS": "OFF",
-                "FLTK_BUILD_FLUID": "OFF",
-                "FLTK_BUILD_FORMS": "OFF",
-                "FLTK_BUILD_GL": "OFF",
-                "PEWTER_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Wconversion -Wcast-align -Wcast-qual -Wshadow -Wnull-dereference -Wold-style-cast"
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "windows-release",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
             }
         }
     ]
