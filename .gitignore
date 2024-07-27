@@ -1,4 +1,8 @@
+# CMake build directory
 /build
 
 # clangd cache
 /.cache
+
+# Visual Studio cache (?)
+/.vs
