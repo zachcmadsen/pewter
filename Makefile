@@ -2,7 +2,7 @@
 default: build
 
 build/build.ninja:
-	cmake --preset dev
+	cmake --preset clang-debug
 
 .PHONY: build
 build: build/build.ninja
