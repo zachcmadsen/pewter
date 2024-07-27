@@ -7,16 +7,30 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - name: Ubuntu
+            os: ubuntu-24.04
+            cmake_preset: clang-release
+
+          - name: Windows
+            os: windows-latest
+            cmake_preset: windows-release
+
+    name: ${{ matrix.name }}
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Developer Command Prompt
+        if: ${{ matrix.os == windows-latest }}
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure
-        run: cmake --preset windows-release
+        run: cmake --preset ${{ matrix.cmake_preset }}
 
       - name: Build
         run: cmake --build build
