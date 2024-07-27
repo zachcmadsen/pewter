@@ -2,24 +2,36 @@
     "version": 3,
     "configurePresets": [
         {
-            "name": "windows-debug",
+            "name": "msvc-debug",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+                "PEWTER_CXX_FLAGS": "/W4"
             }
         },
         {
-            "name": "windows-release",
+            "name": "msvc-release",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"
+            }
+        },
+        {
+            "name": "clang-debug",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "PEWTER_CXX_FLAGS": "-Wall -pedantic -Wextra -Wconversion -Wsign-conversion"
             }
         },
         {
