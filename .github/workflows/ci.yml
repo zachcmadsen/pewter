@@ -29,6 +29,13 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Install Ninja
+        if: ${{ matrix.os == 'ubuntu-24.04' }}
+        run: |
+          curl -L -o ninja-linux.zip https://github.com/ninja-build/ninja/releases/download/v1.12.1/ninja-linux.zip
+          unzip ninja-linux.zip -d bin
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+
       - name: Configure
         run: cmake --preset ${{ matrix.cmake_preset }}
 
